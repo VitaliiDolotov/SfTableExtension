@@ -18,16 +18,10 @@ namespace SfTableExtension
             var user = Create<UserAccount>(table).First();
         }
 
-        private bool IsCollectionTypeProperty<T>(PropertyInfo propertyInfo)
+        private bool IsCollectionType<T>(Type propType)
         {
-            return typeof(T).IsAssignableFrom(propertyInfo.PropertyType) &&
-                   !typeof(string).IsAssignableFrom(propertyInfo.PropertyType);
-        }
-
-        private bool IsCollectionTypeField<T>(FieldInfo fieldInfo)
-        {
-            return typeof(T).IsAssignableFrom(fieldInfo.FieldType) &&
-                   !typeof(string).IsAssignableFrom(fieldInfo.FieldType);
+            return typeof(T).IsAssignableFrom(propType) &&
+                   !typeof(string).IsAssignableFrom(propType);
         }
 
         private object Parse(Type propertyType, object propertyValue)
@@ -51,12 +45,10 @@ namespace SfTableExtension
             var instances = new List<T>() { table.Rows.First().CreateInstance<T>() };
 
             var properties = typeof(T).GetProperties().ToList();
-            var propertiesList = properties.FindAll(x => typeof(IEnumerable).IsAssignableFrom(x.PropertyType)
-                                                         && !typeof(string).IsAssignableFrom(x.PropertyType));
+            var propertiesList = properties.FindAll(x => IsCollectionType<IEnumerable>(x.PropertyType));
 
             var fields = typeof(T).GetFields().ToList();
-            var fieldsList = fields.FindAll(x => typeof(IEnumerable).IsAssignableFrom(x.FieldType)
-                                                 && !typeof(string).IsAssignableFrom(x.FieldType));
+            var fieldsList = fields.FindAll(x => IsCollectionType<IEnumerable>(x.FieldType));
 
             var allListName = propertiesList.Select(x => x.Name).ToList();
             allListName.AddRange(fieldsList.Select(x => x.Name).ToList());
@@ -75,12 +67,12 @@ namespace SfTableExtension
                 foreach (var property in properties)
                 {
                     if (!row.ContainsKey(property.Name)) continue;
-                    if (!IsCollectionTypeProperty<IEnumerable>(property)) continue;
+                    if (!IsCollectionType<IEnumerable>(property.PropertyType)) continue;
                     if (row[property.Name].IsNullOrEmpty()) continue;
 
                     object propertyValue = row[property.Name];
 
-                    var propertyType = IsCollectionTypeProperty<Array>(property) ?
+                    var propertyType = IsCollectionType<Array>(property.PropertyType) ?
                         property.PropertyType.GetElementType() :
                         property.PropertyType.GenericTypeArguments.First();
 
@@ -91,7 +83,7 @@ namespace SfTableExtension
 
                     var getInstanceValue = property.GetValue(instances.Last());
                     // Add value to array Type property
-                    if (IsCollectionTypeProperty<Array>(property))
+                    if (IsCollectionType<Array>(property.PropertyType))
                     {
                         var resultList = ((IEnumerable)getInstanceValue).Cast<object>().ToList();
                         resultList.Add(propertyValue);
@@ -112,12 +104,12 @@ namespace SfTableExtension
                 foreach (var field in fieldsList)
                 {
                     if (!row.ContainsKey(field.Name)) continue;
-                    if (!IsCollectionTypeField<IEnumerable>(field)) continue;
+                    if (!IsCollectionType<IEnumerable>(field.FieldType)) continue;
                     if (row[field.Name].IsNullOrEmpty()) continue;
 
                     object propertyValue = row[field.Name];
 
-                    var fieldType = IsCollectionTypeField<Array>(field) ?
+                    var fieldType = IsCollectionType<Array>(field.FieldType) ?
                         field.FieldType.GetElementType() :
                         field.FieldType.GenericTypeArguments.First();
 
@@ -128,7 +120,7 @@ namespace SfTableExtension
 
                     var getInstanceValue = field.GetValue(instances.Last());
                     // Add value to array Type filed
-                    if (IsCollectionTypeField<Array>(field))
+                    if (IsCollectionType<Array>(field.FieldType))
                     {
                         var resultList = ((IEnumerable)getInstanceValue).Cast<object>().ToList();
                         resultList.Add(propertyValue);

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using TechTalk.SpecFlow;
 using TechTalk.SpecFlow.Assist;
@@ -122,6 +123,9 @@ namespace SfTableExtension
         private static object Parse(Type propertyType, object propertyValue)
         {
             if (propertyType == typeof(string)) return propertyValue;
+
+            if (propertyType.BaseType.Equals((typeof(Enum))))
+                return Enum.Parse(propertyType, propertyValue.ToString());
 
             try
             {

@@ -48,8 +48,8 @@ namespace SfTableExtension
             @class.Last().AccountScore[0].Should().Be(7);
             @class.Last().AccountScore[1].Should().Be(1);
 
-            @class.First().Languages[0].Should().Be(Language.Finnish);
-            @class.First().Languages[1].Should().Be(Language.Swedish);
+            @class.Last().Languages[0].Should().Be(Language.Finnish);
+            @class.Last().Languages[1].Should().Be(Language.Swedish);
         }
     }
 }

@@ -18,27 +18,32 @@ namespace SfTableExtension
             var user = Create<UserAccount>(table).First();
         }
 
-        private bool IsCollectionTypeProperty(PropertyInfo propertyInfo)
+        private bool IsCollectionTypeProperty<T>(PropertyInfo propertyInfo)
         {
-            return typeof(IEnumerable).IsAssignableFrom(propertyInfo.PropertyType) &&
+            return typeof(T).IsAssignableFrom(propertyInfo.PropertyType) &&
                    !typeof(string).IsAssignableFrom(propertyInfo.PropertyType);
         }
 
-        private bool IsArrayTypeProperty(PropertyInfo propertyInfo)
+        private bool IsCollectionTypeField<T>(FieldInfo fieldInfo)
         {
-            return typeof(Array).IsAssignableFrom(propertyInfo.PropertyType) &&
-                   !typeof(string).IsAssignableFrom(propertyInfo.PropertyType);
-        }
-        private bool IsCollectionTypeField(FieldInfo fieldInfo)
-        {
-            return typeof(IEnumerable).IsAssignableFrom(fieldInfo.FieldType) &&
+            return typeof(T).IsAssignableFrom(fieldInfo.FieldType) &&
                    !typeof(string).IsAssignableFrom(fieldInfo.FieldType);
         }
 
-        private bool IsArrayTypeField(FieldInfo fieldInfo)
+        private object Parse(Type propertyType, object propertyValue)
         {
-            return typeof(Array).IsAssignableFrom(fieldInfo.FieldType) &&
-                   !typeof(string).IsAssignableFrom(fieldInfo.FieldType);
+            if (propertyType == typeof(string)) return propertyValue;
+
+            try
+            {
+                var parse = propertyType.GetMethods().First(x => x.Name.Equals("Parse"));
+                return parse.Invoke(propertyType, new object[] { propertyValue });
+            }
+            catch
+            {
+                throw new Exception(
+                    $"Unable to parse '{propertyValue}' value to {propertyType.Name} type");
+            }
         }
 
         public List<T> Create<T>(Table table)
@@ -61,137 +66,83 @@ namespace SfTableExtension
 
             foreach (var row in table.Rows.Skip(1))
             {
-                bool flag = false;
-
-                foreach (var cell in row)
+                if (row.Any(cell => allVariablesName.Contains(cell.Key) && !allListName.Contains(cell.Key) && cell.Value.IsNotNullOrEmpty()))
                 {
-                    if (allVariablesName.Contains(cell.Key) && !allListName.Contains(cell.Key) && cell.Value.IsNotNullOrEmpty())
-                    {
-                        T nextInstanse = row.CreateInstance<T>();
-                        instances.Add(nextInstanse);
-                        flag = true;
-                        break;
-                    }
-                }
-
-                if (flag)
-                {
+                    instances.Add(row.CreateInstance<T>());
                     continue;
                 }
 
                 foreach (var property in properties)
                 {
-                    if (!row.ContainsKey(property.Name))
-                        continue;
+                    if (!row.ContainsKey(property.Name)) continue;
+                    if (!IsCollectionTypeProperty<IEnumerable>(property)) continue;
+                    if (row[property.Name].IsNullOrEmpty()) continue;
 
-                    if (IsCollectionTypeProperty(property))
+                    object propertyValue = row[property.Name];
+
+                    var propertyType = IsCollectionTypeProperty<Array>(property) ?
+                        property.PropertyType.GetElementType() :
+                        property.PropertyType.GenericTypeArguments.First();
+
+                    if (propertyType is null)
+                        throw new Exception($"Unable to get {property.Name} property type");
+
+                    propertyValue = Parse(propertyType, propertyValue);
+
+                    var getInstanceValue = property.GetValue(instances.Last());
+                    // Add value to array Type property
+                    if (IsCollectionTypeProperty<Array>(property))
                     {
-                        var propertyStringValue = row[property.Name];
-
-                        if (propertyStringValue.IsNullOrEmpty())
-                            continue;
-
-                        object propertyValue = propertyStringValue;
-
-                        var propertyType = IsArrayTypeProperty(property) ?
-                            property.PropertyType.GetElementType() :
-                            property.PropertyType.GenericTypeArguments.First();
-
-                        if (propertyType is null)
-                            throw new Exception($"Unable to get {property.Name} property type");
-
-                        // Parse property to the appropriate Type
-                        if (propertyType != typeof(string))
-                        {
-                            try
-                            {
-                                var parse = propertyType.GetMethods().First(x => x.Name.Equals("Parse"));
-                                propertyValue = parse.Invoke(propertyType, new object[] { propertyStringValue });
-                            }
-                            catch
-                            {
-                                throw new Exception(
-                                    $"Unable to parse '{propertyStringValue}' value of {property.Name} property to {propertyType.Name} type");
-                            }
-                        }
-
-                        // Add value to array Type property
-                        if (IsArrayTypeProperty(property))
-                        {
-                            var getInstanceValue = property.GetValue(instances.Last());
-                            var resultList = ((IEnumerable)getInstanceValue).Cast<object>().ToList();
-                            resultList.Add(propertyValue);
-                            var resultArray = Array.CreateInstance(propertyType, resultList.Count);
-                            Array.Copy(resultList.ToArray(), resultArray, resultList.Count);
-                            property.SetValue(instances.Last(), resultArray);
-                        }
-                        // Add value to Collection type property
-                        else
-                        {
-                            var getInstanceValue = property.GetValue(instances.Last());
-                            var iCollectionObject = typeof(ICollection<>).MakeGenericType(propertyType);
-                            var addMethod = iCollectionObject.GetMethod("Add");
-                            addMethod.Invoke(getInstanceValue, new object[] { propertyValue });
-                            property.SetValue(instances.Last(), getInstanceValue);
-                        }
+                        var resultList = ((IEnumerable)getInstanceValue).Cast<object>().ToList();
+                        resultList.Add(propertyValue);
+                        var resultArray = Array.CreateInstance(propertyType, resultList.Count);
+                        Array.Copy(resultList.ToArray(), resultArray, resultList.Count);
+                        property.SetValue(instances.Last(), resultArray);
+                    }
+                    // Add value to Collection type property
+                    else
+                    {
+                        var iCollectionObject = typeof(ICollection<>).MakeGenericType(propertyType);
+                        var addMethod = iCollectionObject.GetMethod("Add");
+                        addMethod.Invoke(getInstanceValue, new object[] { propertyValue });
+                        property.SetValue(instances.Last(), getInstanceValue);
                     }
                 }
 
                 foreach (var field in fieldsList)
                 {
-                    if (!row.ContainsKey(field.Name))
-                        continue;
+                    if (!row.ContainsKey(field.Name)) continue;
+                    if (!IsCollectionTypeField<IEnumerable>(field)) continue;
+                    if (row[field.Name].IsNullOrEmpty()) continue;
 
-                    if (IsCollectionTypeField(field))
+                    object propertyValue = row[field.Name];
+
+                    var fieldType = IsCollectionTypeField<Array>(field) ?
+                        field.FieldType.GetElementType() :
+                        field.FieldType.GenericTypeArguments.First();
+
+                    if (fieldType is null)
+                        throw new Exception($"Unable to get {field.Name} property type");
+
+                    propertyValue = Parse(fieldType, propertyValue);
+
+                    var getInstanceValue = field.GetValue(instances.Last());
+                    // Add value to array Type filed
+                    if (IsCollectionTypeField<Array>(field))
                     {
-                        var fieldStringValue = row[field.Name];
-
-                        if (fieldStringValue.IsNullOrEmpty())
-                            continue;
-
-                        object propertyValue = fieldStringValue;
-
-                        var fieldType = IsArrayTypeField(field) ?
-                            field.FieldType.GetElementType() :
-                            field.FieldType.GenericTypeArguments.First();
-
-                        if (fieldType is null)
-                            throw new Exception($"Unable to get {field.Name} property type");
-
-                        // Parse field to the appropriate Type
-                        if (fieldType != typeof(string))
-                        {
-                            try
-                            {
-                                var parse = fieldType.GetMethods().First(x => x.Name.Equals("Parse"));
-                                propertyValue = parse.Invoke(fieldType, new object[] { fieldStringValue });
-                            }
-                            catch
-                            {
-                                throw new Exception(
-                                    $"Unable to parse '{fieldStringValue}' value of {field.Name} property to {fieldType.Name} type");
-                            }
-                        }
-
-                        // Add value to array Type filed
-                        if (IsArrayTypeField(field))
-                        {
-                            var getInstanceValue = field.GetValue(instances.Last());
-                            var resultList = ((IEnumerable)getInstanceValue).Cast<object>().ToList();
-                            resultList.Add(propertyValue);
-                            var resultArray = Array.CreateInstance(fieldType, resultList.Count);
-                            Array.Copy(resultList.ToArray(), resultArray, resultList.Count);
-                            field.SetValue(instances.Last(), resultArray);
-                        }
-                        // Add value to Collection type filed
-                        else
-                        {
-                            var getInstanceValue = field.GetValue(instances.Last());
-                            var iCollectionObject = typeof(ICollection<>).MakeGenericType(fieldType);
-                            var addMethod = iCollectionObject.GetMethod("Add");
-                            addMethod.Invoke(getInstanceValue, new object[] { propertyValue });
-                            field.SetValue(instances.Last(), getInstanceValue);
-                        }
+                        var resultList = ((IEnumerable)getInstanceValue).Cast<object>().ToList();
+                        resultList.Add(propertyValue);
+                        var resultArray = Array.CreateInstance(fieldType, resultList.Count);
+                        Array.Copy(resultList.ToArray(), resultArray, resultList.Count);
+                        field.SetValue(instances.Last(), resultArray);
+                    }
+                    // Add value to Collection type filed
+                    else
+                    {
+                        var iCollectionObject = typeof(ICollection<>).MakeGenericType(fieldType);
+                        var addMethod = iCollectionObject.GetMethod("Add");
+                        addMethod.Invoke(getInstanceValue, new object[] { propertyValue });
+                        field.SetValue(instances.Last(), getInstanceValue);
                     }
                 }
             }

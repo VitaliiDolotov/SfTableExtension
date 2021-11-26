@@ -124,22 +124,22 @@ this.ScenarioInitialize(scenarioInfo);
                             "false"});
                 table1.AddRow(new string[] {
                             "",
-                            "Marian",
-                            "08477542984",
+                            "Tom",
+                            "08473322911",
                             "",
                             "true"});
                 table1.AddRow(new string[] {
-                            "2",
+                            "7",
                             "",
                             "",
-                            "Sales person",
+                            "Supper Admin",
                             "false"});
                 table1.AddRow(new string[] {
-                            "5",
+                            "1",
                             "",
                             "",
                             "Content moderator",
-                            "false"});
+                            "true"});
 #line 6
  testRunner.Given("User generates object with list", ((string)(null)), table1, "Given ");
 #line hidden

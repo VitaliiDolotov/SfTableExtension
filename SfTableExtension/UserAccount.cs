@@ -16,6 +16,7 @@ namespace SfTableExtension
         //public List<bool> RoleActivationStatus { get; set; }
         //public IList<bool> RoleActivationStatus { get; set; }
         //public IEnumerable<bool> RoleActivationStatus { get; set; }
+        //public bool[] RoleActivationStatus { get; set; }
         public bool[] RoleActivationStatus;
 
         //public List<double> AccountScore { get; set; }
@@ -24,5 +25,6 @@ namespace SfTableExtension
         public int[] AccountScore { get; set; }
 
         public List<string> Addresses;
+        public List<string> AddressesDetails { get; set; }
     }
 }

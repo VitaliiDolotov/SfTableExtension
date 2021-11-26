@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace SfTableExtension
 {
@@ -24,5 +23,12 @@ namespace SfTableExtension
         public double[] AccountScore { get; set; }
 
         public List<string> Addresses { get; set; }
+
+        //public List<Language> Language { get; set; }
+    }
+
+    public enum Language
+    {
+        English, Finnish, Swedish
     }
 }

@@ -103,25 +103,15 @@ this.ScenarioInitialize(scenarioInfo);
                             "Name",
                             "Phone",
                             "Roles",
-                            "RoleActivationStatus"});
+                            "RoleActivationStatus",
+                            "Language"});
                 table1.AddRow(new string[] {
                             "5",
                             "Marian",
                             "08477542984",
                             "Portal Admin",
-                            "true"});
-                table1.AddRow(new string[] {
-                            "2",
-                            "",
-                            "",
-                            "Sales person",
-                            "false"});
-                table1.AddRow(new string[] {
-                            "5",
-                            "",
-                            "",
-                            "Content moderator",
-                            "false"});
+                            "true",
+                            "English"});
 #line 6
  testRunner.Given("User generates object with list", ((string)(null)), table1, "Given ");
 #line hidden

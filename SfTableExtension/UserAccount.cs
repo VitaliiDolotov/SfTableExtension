@@ -16,12 +16,12 @@ namespace SfTableExtension
         //public List<bool> RoleActivationStatus { get; set; }
         //public IList<bool> RoleActivationStatus { get; set; }
         //public IEnumerable<bool> RoleActivationStatus { get; set; }
-        public bool[] RoleActivationStatus { get; set; }
+        //public bool[] RoleActivationStatus { get; set; }
 
         //public List<double> AccountScore { get; set; }
         //public IList<double> AccountScore { get; set; }
         //public IEnumerable<double> AccountScore { get; set; }
-        public double[] AccountScore;
+        public double[] AccountScore { get; set; }
 
         public List<string> Addresses { get; set; }
     }

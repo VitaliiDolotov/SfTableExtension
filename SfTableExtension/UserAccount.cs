@@ -8,7 +8,7 @@ namespace SfTableExtension
         public string Name { get; set; }
         public string Phone { get; set; }
 
-        //public List<string> Roles { get; set; }
+        public List<string> Roles { get; set; }
         //public IList<string> Roles { get; set; }
         //public IEnumerable<string> Roles { get; set; }
         //public string[] Roles { get; set; }
@@ -21,7 +21,7 @@ namespace SfTableExtension
         //public List<double> AccountScore { get; set; }
         //public IList<double> AccountScore { get; set; }
         //public IEnumerable<double> AccountScore { get; set; }
-        public double[] AccountScore { get; set; }
+        //public double[] AccountScore { get; set; }
 
         public List<string> Addresses { get; set; }
     }

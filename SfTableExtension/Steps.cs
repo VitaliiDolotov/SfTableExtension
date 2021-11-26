@@ -32,21 +32,17 @@ namespace SfTableExtension
 
         public static List<T> Create<T>(Table table)
         {
+            var instances = new List<T>() { table.Rows[0].CreateInstance<T>() };
 
-            List<T> InstanceList = new List<T>();
+            var properties = typeof(T).GetProperties().ToList();
+            var propertiesList = properties
+                .FindAll(x => typeof(IEnumerable).IsAssignableFrom(x.PropertyType) && !typeof(string)
+                .IsAssignableFrom(x.PropertyType));
 
-            T firstInstance = table.Rows[0].CreateInstance<T>();
-            InstanceList.Add(firstInstance);
-
-            Type type = typeof(T);
-
-            var properties = type.GetProperties().ToList();
-            var propertiesList = properties.FindAll(x => typeof(IEnumerable).IsAssignableFrom(x.PropertyType)
-                                                                   && !typeof(string).IsAssignableFrom(x.PropertyType));
-
-            var fields = type.GetFields().ToList();
-            var fieldsList = fields.FindAll(x => typeof(IEnumerable).IsAssignableFrom(x.FieldType)
-                                                                && !typeof(string).IsAssignableFrom(x.FieldType));
+            var fields = typeof(T).GetFields().ToList();
+            var fieldsList = fields
+                .FindAll(x => typeof(IEnumerable)
+                .IsAssignableFrom(x.FieldType) && !typeof(string).IsAssignableFrom(x.FieldType));
 
             var allListName = propertiesList.Select(x => x.Name).ToList();
             allListName.AddRange(fieldsList.Select(x => x.Name).ToList());
@@ -76,12 +72,12 @@ namespace SfTableExtension
 
                             if (typeof(Array).IsAssignableFrom(property.PropertyType))
                             {
-                                getInstanceValue = property.GetValue(InstanceList.Last()) as object[];
+                                getInstanceValue = property.GetValue(instances.Last()) as object[];
                                 subInstanceType = getInstanceValue.GetType().GetElementType();
                             }
                             else
                             {
-                                getInstanceValue = property.GetValue(InstanceList.Last());
+                                getInstanceValue = property.GetValue(instances.Last());
                                 subInstanceType = property.PropertyType.GenericTypeArguments.First();
                             }
 
@@ -111,7 +107,7 @@ namespace SfTableExtension
                                 var iCollectionObject = typeof(ICollection<>).MakeGenericType(subInstanceType);
                                 var addMethod = iCollectionObject.GetMethod("Add");
                                 addMethod.Invoke(getInstanceValue, new object[] { result });
-                                property.SetValue(InstanceList.Last(), getInstanceValue);
+                                property.SetValue(instances.Last(), getInstanceValue);
                             }
 
                         }
@@ -138,12 +134,12 @@ namespace SfTableExtension
 
                             if (typeof(Array).IsAssignableFrom(field.FieldType))
                             {
-                                getInstanceValue = field.GetValue(InstanceList.Last()) as object[];
+                                getInstanceValue = field.GetValue(instances.Last()) as object[];
                                 subInstanceType = getInstanceValue.GetType().GetElementType();
                             }
                             else
                             {
-                                getInstanceValue = field.GetValue(InstanceList.Last());
+                                getInstanceValue = field.GetValue(instances.Last());
                                 subInstanceType = field.FieldType.GenericTypeArguments.First();
                             }
 
@@ -172,7 +168,7 @@ namespace SfTableExtension
                                 var iCollectionObject = typeof(ICollection<>).MakeGenericType(subInstanceType);
                                 var addMethod = iCollectionObject.GetMethod("Add");
                                 addMethod.Invoke(getInstanceValue, new object[] { result });
-                                field.SetValue(InstanceList.Last(), getInstanceValue);
+                                field.SetValue(instances.Last(), getInstanceValue);
                             }
 
                         }
@@ -183,13 +179,13 @@ namespace SfTableExtension
                     if (allVariablesName.Contains(cell.Key) && !allListName.Contains(cell.Key) && cell.Value.IsNotNullOrEmpty())
                     {
                         T nextInstanse = row.CreateInstance<T>();
-                        InstanceList.Add(nextInstanse);
+                        instances.Add(nextInstanse);
                         break;
                     }
                 }
             }
 
-            return InstanceList;
+            return instances;
         }
 
         //public List<T> Create<T>(Table table)

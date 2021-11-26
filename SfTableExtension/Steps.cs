@@ -18,18 +18,6 @@ namespace SfTableExtension
             var user = Create<UserAccount>(table).First();
         }
 
-        private bool IsCollectionTypeProperty(PropertyInfo propertyInfo)
-        {
-            return typeof(IEnumerable).IsAssignableFrom(propertyInfo.PropertyType) &&
-                   !typeof(string).IsAssignableFrom(propertyInfo.PropertyType);
-        }
-
-        private bool IsArrayTypeProperty(PropertyInfo propertyInfo)
-        {
-            return typeof(Array).IsAssignableFrom(propertyInfo.PropertyType) &&
-                   !typeof(string).IsAssignableFrom(propertyInfo.PropertyType);
-        }
-
         public static List<T> Create<T>(Table table)
         {
             var instances = new List<T>() { table.Rows[0].CreateInstance<T>() };
@@ -54,126 +42,111 @@ namespace SfTableExtension
             {
                 foreach (var property in properties)
                 {
-                    if (row.ContainsKey(property.Name))
+                    if (!row.ContainsKey(property.Name)) continue;
+                    if (!propertiesList.Contains(property)) continue;
+
+                    var getSubInstanceValue = row[property.Name];
+
+                    if (getSubInstanceValue.IsNullOrEmpty()) continue;
+
+                    object result;
+                    Type subInstanceType = default;
+                    object getInstanceValue = default;
+
+                    if (typeof(Array).IsAssignableFrom(property.PropertyType))
                     {
-                        if (propertiesList.Contains(property))
+                        getInstanceValue = property.GetValue(instances.Last()) as object[];
+                        subInstanceType = getInstanceValue.GetType().GetElementType();
+                    }
+                    else
+                    {
+                        getInstanceValue = property.GetValue(instances.Last());
+                        subInstanceType = property.PropertyType.GenericTypeArguments.First();
+                    }
+
+                    if (subInstanceType != typeof(string))
+                    {
+                        try
                         {
-                            var getSubInstanceValue = row[property.Name];
-
-                            if (string.IsNullOrEmpty(getSubInstanceValue))
-                            {
-                                continue;
-                            }
-
-                            object result;
-                            Type subInstanceType = default;
-                            object getInstanceValue = default;
-
-
-                            if (typeof(Array).IsAssignableFrom(property.PropertyType))
-                            {
-                                getInstanceValue = property.GetValue(instances.Last()) as object[];
-                                subInstanceType = getInstanceValue.GetType().GetElementType();
-                            }
-                            else
-                            {
-                                getInstanceValue = property.GetValue(instances.Last());
-                                subInstanceType = property.PropertyType.GenericTypeArguments.First();
-                            }
-
-                            if (subInstanceType != typeof(string))
-                            {
-                                try
-                                {
-                                    var parse = subInstanceType.GetMethods().First(x => x.Name.Equals("Parse"));
-                                    result = parse.Invoke(subInstanceType, new object[] { getSubInstanceValue });
-                                }
-                                catch (Exception ex)
-                                {
-                                    throw new Exception($"Impossible to convert string into '{subInstanceType.Name}' type. Exception: '{ex}'.");
-                                }
-                            }
-                            else
-                            {
-                                result = getSubInstanceValue;
-                            }
-
-                            if (typeof(Array).IsAssignableFrom(property.PropertyType))
-                            {
-
-                            }
-                            else
-                            {
-                                var iCollectionObject = typeof(ICollection<>).MakeGenericType(subInstanceType);
-                                var addMethod = iCollectionObject.GetMethod("Add");
-                                addMethod.Invoke(getInstanceValue, new object[] { result });
-                                property.SetValue(instances.Last(), getInstanceValue);
-                            }
-
+                            var parse = subInstanceType.GetMethods().First(x => x.Name.Equals("Parse"));
+                            result = parse.Invoke(subInstanceType, new object[] { getSubInstanceValue });
                         }
+                        catch (Exception ex)
+                        {
+                            throw new Exception($"Impossible to convert string into '{subInstanceType.Name}' type. Exception: '{ex}'.");
+                        }
+                    }
+                    else
+                    {
+                        result = getSubInstanceValue;
+                    }
+
+                    if (typeof(Array).IsAssignableFrom(property.PropertyType))
+                    {
+
+                    }
+                    else
+                    {
+                        var iCollectionObject = typeof(ICollection<>).MakeGenericType(subInstanceType);
+                        var addMethod = iCollectionObject.GetMethod("Add");
+                        addMethod.Invoke(getInstanceValue, new object[] { result });
+                        property.SetValue(instances.Last(), getInstanceValue);
                     }
                 }
 
                 foreach (var field in fields)
                 {
-                    if (row.ContainsKey(field.Name))
+                    if (!row.ContainsKey(field.Name)) continue;
+                    if (!fieldsList.Contains(field)) continue;
+
+                    var getSubInstanceValue = row[field.Name];
+
+                    if (string.IsNullOrEmpty(getSubInstanceValue)) continue;
+
+                    object result;
+                    Type subInstanceType = default;
+                    object getInstanceValue = default;
+
+                    if (typeof(Array).IsAssignableFrom(field.FieldType))
                     {
-                        if (fieldsList.Contains(field))
+                        getInstanceValue = field.GetValue(instances.Last()) as object[];
+                        subInstanceType = getInstanceValue.GetType().GetElementType();
+                    }
+                    else
+                    {
+                        getInstanceValue = field.GetValue(instances.Last());
+                        subInstanceType = field.FieldType.GenericTypeArguments.First();
+                    }
+
+                    if (subInstanceType != typeof(string))
+                    {
+                        try
                         {
-                            var getSubInstanceValue = row[field.Name];
-
-                            if (string.IsNullOrEmpty(getSubInstanceValue))
-                            {
-                                continue;
-                            }
-
-                            object result;
-                            Type subInstanceType = default;
-                            object getInstanceValue = default;
-
-
-                            if (typeof(Array).IsAssignableFrom(field.FieldType))
-                            {
-                                getInstanceValue = field.GetValue(instances.Last()) as object[];
-                                subInstanceType = getInstanceValue.GetType().GetElementType();
-                            }
-                            else
-                            {
-                                getInstanceValue = field.GetValue(instances.Last());
-                                subInstanceType = field.FieldType.GenericTypeArguments.First();
-                            }
-
-                            if (subInstanceType != typeof(string))
-                            {
-                                try
-                                {
-                                    var parse = subInstanceType.GetMethods().First(x => x.Name.Equals("Parse"));
-                                    result = parse.Invoke(subInstanceType, new object[] { getSubInstanceValue });
-                                }
-                                catch (Exception ex)
-                                {
-                                    throw new Exception($"Impossible to convert string into '{subInstanceType.Name}' type. Exception: '{ex}'.");
-                                }
-                            }
-                            else
-                            {
-                                result = getSubInstanceValue;
-                            }
-
-                            if (typeof(Array).IsAssignableFrom(field.FieldType))
-                            {
-                            }
-                            else
-                            {
-                                var iCollectionObject = typeof(ICollection<>).MakeGenericType(subInstanceType);
-                                var addMethod = iCollectionObject.GetMethod("Add");
-                                addMethod.Invoke(getInstanceValue, new object[] { result });
-                                field.SetValue(instances.Last(), getInstanceValue);
-                            }
-
+                            var parse = subInstanceType.GetMethods().First(x => x.Name.Equals("Parse"));
+                            result = parse.Invoke(subInstanceType, new object[] { getSubInstanceValue });
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new Exception($"Impossible to convert string into '{subInstanceType.Name}' type. Exception: '{ex}'.");
                         }
                     }
+                    else
+                    {
+                        result = getSubInstanceValue;
+                    }
+
+                    if (typeof(Array).IsAssignableFrom(field.FieldType))
+                    {
+                    }
+                    else
+                    {
+                        var iCollectionObject = typeof(ICollection<>).MakeGenericType(subInstanceType);
+                        var addMethod = iCollectionObject.GetMethod("Add");
+                        addMethod.Invoke(getInstanceValue, new object[] { result });
+                        field.SetValue(instances.Last(), getInstanceValue);
+                    }
                 }
+
                 foreach (var cell in row)
                 {
                     if (allVariablesName.Contains(cell.Key) && !allListName.Contains(cell.Key) && cell.Value.IsNotNullOrEmpty())

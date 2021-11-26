@@ -122,6 +122,24 @@ this.ScenarioInitialize(scenarioInfo);
                             "",
                             "Content moderator",
                             "false"});
+                table1.AddRow(new string[] {
+                            "",
+                            "Marian",
+                            "08477542984",
+                            "",
+                            "true"});
+                table1.AddRow(new string[] {
+                            "2",
+                            "",
+                            "",
+                            "Sales person",
+                            "false"});
+                table1.AddRow(new string[] {
+                            "5",
+                            "",
+                            "",
+                            "Content moderator",
+                            "false"});
 #line 6
  testRunner.Given("User generates object with list", ((string)(null)), table1, "Given ");
 #line hidden

@@ -4,7 +4,10 @@
 @mytag
 Scenario: TableTest
 	Given User generates object with list
-		| AccountScore | Name   | Phone       | Roles             | RoleActivationStatus | 
-		| 5            | Marian | 08477542984 | Portal Admin      | true                 | 
+		| AccountScore | Name   | Phone       | Roles             | RoleActivationStatus |
+		| 5            | Marian | 08477542984 | Portal Admin      | true                 |
 		| 2            |        |             | Sales person      | false                |
-		| 5            |        |             | Content moderator | false                | 
+		| 5            |        |             | Content moderator | false                |
+		|              | Marian | 08477542984 |                   | true                 |
+		| 2            |        |             | Sales person      | false                |
+		| 5            |        |             | Content moderator | false                |

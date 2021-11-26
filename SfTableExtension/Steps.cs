@@ -50,15 +50,16 @@ namespace SfTableExtension
             var fields = typeof(T).GetFields().ToList();
             var fieldsList = fields.FindAll(x => IsCollectionType<IEnumerable>(x.FieldType));
 
-            var allListName = propertiesList.Select(x => x.Name).ToList();
-            allListName.AddRange(fieldsList.Select(x => x.Name).ToList());
+            var allListNames = propertiesList.Select(x => x.Name)
+                .Concat(fieldsList.Select(x => x.Name).ToList());
 
-            var allVariablesName = properties.Select(x => x.Name).ToList();
-            allVariablesName.AddRange(fields.Select(x => x.Name).ToList());
+            var typeVariablesNames = properties.Select(x => x.Name)
+                .Concat(fields.Select(x => x.Name).ToList());
 
             foreach (var row in table.Rows.Skip(1))
             {
-                if (row.Any(cell => allVariablesName.Contains(cell.Key) && !allListName.Contains(cell.Key) && cell.Value.IsNotNullOrEmpty()))
+                if (row.Any(cell => typeVariablesNames.Contains(cell.Key)
+                                    && !allListNames.Contains(cell.Key) && cell.Value.IsNotNullOrEmpty()))
                 {
                     instances.Add(row.CreateInstance<T>());
                     continue;

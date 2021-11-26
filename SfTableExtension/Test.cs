@@ -10,13 +10,13 @@ namespace SfTableExtension
         [Fact]
         public void Check_Table_Creation()
         {
-            var table = new Table("AccountScore", "Name", "Phone", "Roles", "RoleActivationStatus");
-            table.AddRow("5", "Marian", "08477542984", "Portal Admin", "true");
-            table.AddRow("2", string.Empty, string.Empty, "Sales person", "false");
-            table.AddRow("8", string.Empty, string.Empty, "Content moderator", "false");
-            table.AddRow(string.Empty, "Tom", "08473322911", string.Empty, "true");
-            table.AddRow("7", string.Empty, string.Empty, "Portal Admin", "false");
-            table.AddRow("1", string.Empty, string.Empty, "Content moderator", "true");
+            var table = new Table("AccountScore", "Name", "Phone", "Roles", "RoleActivationStatus", "Languages");
+            table.AddRow("5", "Marian", "08477542984", "Portal Admin", "true", "English");
+            table.AddRow("2", string.Empty, string.Empty, "Sales person", "false", "Swedish");
+            table.AddRow("8", string.Empty, string.Empty, "Content moderator", "false", "Finnish");
+            table.AddRow(string.Empty, "Tom", "08473322911", string.Empty, "true", "Finnish");
+            table.AddRow("7", string.Empty, string.Empty, "Portal Admin", "false", "Swedish");
+            table.AddRow("1", string.Empty, string.Empty, "Content moderator", "true", string.Empty);
 
             var @class = table.Create<UserAccount>();
 
@@ -33,6 +33,10 @@ namespace SfTableExtension
             @class.First().AccountScore[1].Should().Be(2);
             @class.First().AccountScore[2].Should().Be(8);
 
+            @class.First().Languages[0].Should().Be(Language.English);
+            @class.First().Languages[1].Should().Be(Language.Swedish);
+            @class.First().Languages[2].Should().Be(Language.Finnish);
+
             // Second object
             @class.Last().Roles[0].Should().Be("Portal Admin");
             @class.Last().Roles[1].Should().Be("Content moderator");
@@ -43,6 +47,9 @@ namespace SfTableExtension
 
             @class.Last().AccountScore[0].Should().Be(7);
             @class.Last().AccountScore[1].Should().Be(1);
+
+            @class.First().Languages[0].Should().Be(Language.Finnish);
+            @class.First().Languages[1].Should().Be(Language.Swedish);
         }
     }
 }

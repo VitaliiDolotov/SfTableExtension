@@ -25,5 +25,16 @@ namespace SfTableExtension
 
         public List<string> Addresses;
         public List<string> AddressesDetails { get; set; }
+
+        public List<Language> Languages { get; set; }
+        //public IList<Language> Languages { get; set; }
+        //public IEnumerable<Language> Languages { get; set; }
+        //public Language[] Languages { get; set; }
+        //public Language[] Languages;
+    }
+
+    public enum Language
+    {
+        English, Finnish, Swedish
     }
 }

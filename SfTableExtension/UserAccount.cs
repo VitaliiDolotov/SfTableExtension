@@ -21,7 +21,7 @@ namespace SfTableExtension
         //public List<double> AccountScore { get; set; }
         //public IList<double> AccountScore { get; set; }
         //public IEnumerable<double> AccountScore { get; set; }
-        public double[] AccountScore { get; set; }
+        public double[] AccountScore;
 
         public List<string> Addresses { get; set; }
     }

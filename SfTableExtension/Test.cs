@@ -116,7 +116,7 @@ namespace SfTableExtension
 
                     var getInstanceValue = property.GetValue(instances.Last());
                     // Add value to array Type property
-                    if (IsCollectionType<Array>(property.PropertyType))
+                    if (IsCollectionType<Array>(propertyType))
                     {
                         var resultList = ((IEnumerable)getInstanceValue).Cast<object>().ToList();
                         resultList.Add(propertyValue);
@@ -140,23 +140,23 @@ namespace SfTableExtension
                     if (!IsCollectionType<IEnumerable>(field.FieldType)) continue;
                     if (row[field.Name].IsNullOrEmpty()) continue;
 
-                    object propertyValue = row[field.Name];
+                    object fieldValue = row[field.Name];
 
                     var fieldType = IsCollectionType<Array>(field.FieldType) ?
                         field.FieldType.GetElementType() :
                         field.FieldType.GenericTypeArguments.First();
 
                     if (fieldType is null)
-                        throw new Exception($"Unable to get {field.Name} property type");
+                        throw new Exception($"Unable to get {field.Name} field type");
 
-                    propertyValue = Parse(fieldType, propertyValue);
+                    fieldValue = Parse(fieldType, fieldValue);
 
                     var getInstanceValue = field.GetValue(instances.Last());
                     // Add value to array Type filed
-                    if (IsCollectionType<Array>(field.FieldType))
+                    if (IsCollectionType<Array>(fieldType))
                     {
                         var resultList = ((IEnumerable)getInstanceValue).Cast<object>().ToList();
-                        resultList.Add(propertyValue);
+                        resultList.Add(fieldValue);
                         var resultArray = Array.CreateInstance(fieldType, resultList.Count);
                         Array.Copy(resultList.ToArray(), resultArray, resultList.Count);
                         field.SetValue(instances.Last(), resultArray);
@@ -166,7 +166,7 @@ namespace SfTableExtension
                     {
                         var iCollectionObject = typeof(ICollection<>).MakeGenericType(fieldType);
                         var addMethod = iCollectionObject.GetMethod("Add");
-                        addMethod.Invoke(getInstanceValue, new object[] { propertyValue });
+                        addMethod.Invoke(getInstanceValue, new object[] { fieldValue });
                         field.SetValue(instances.Last(), getInstanceValue);
                     }
                 }

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection;
 using TechTalk.SpecFlow;
 using TechTalk.SpecFlow.Assist;
 using TechTalk.SpecRun.Common.Helper;
@@ -16,16 +17,18 @@ namespace SfTableExtension
             var instances = new List<T>() { table.Rows.First().CreateInstance<T>() };
 
             var properties = typeof(T).GetProperties().ToList();
-            var propertiesList = properties.FindAll(x => IsCollectionType<IEnumerable>(x.PropertyType));
+            var propertiesList = properties.FindAll(x => IsCollectionType<IEnumerable>(x.PropertyType)).Select(x => (MemberInfo)x).ToList(); ;
 
             var fields = typeof(T).GetFields().ToList();
-            var fieldsList = fields.FindAll(x => IsCollectionType<IEnumerable>(x.FieldType));
+            var fieldsList = fields.FindAll(x => IsCollectionType<IEnumerable>(x.FieldType)).Select(x => (MemberInfo)x); ;
 
             var allCollectionTypeVariablesNames = propertiesList.Select(x => x.Name)
                 .Concat(fieldsList.Select(x => x.Name).ToList());
 
             var allVariablesNames = properties.Select(x => x.Name)
                 .Concat(fields.Select(x => x.Name).ToList());
+
+            var propsAndFields = propertiesList.Concat(fieldsList).ToList();
 
             foreach (var row in table.Rows.Skip(1))
             {
@@ -36,26 +39,26 @@ namespace SfTableExtension
                     continue;
                 }
 
-                foreach (var property in properties)
+                foreach (var property in propsAndFields)
                 {
-                    if (!row.ContainsKey(property.Name)) continue;
-                    if (!IsCollectionType<IEnumerable>(property.PropertyType)) continue;
-                    if (row[property.Name].IsNullOrEmpty()) continue;
+                    if (!row.ContainsKey(((MemberInfo)property).Name)) continue;
+                    if (!IsCollectionType<IEnumerable>(PropertyType(property))) continue;
+                    if (row[((MemberInfo)property).Name].IsNullOrEmpty()) continue;
 
-                    object propertyValue = row[property.Name];
+                    object propertyValue = row[((MemberInfo)property).Name];
 
-                    var propertyType = IsCollectionType<Array>(property.PropertyType) ?
-                        property.PropertyType.GetElementType() :
-                        property.PropertyType.GenericTypeArguments.First();
+                    var propertyType = IsCollectionType<Array>(PropertyType(property)) ?
+                        PropertyType(property).GetElementType() :
+                        PropertyType(property).GenericTypeArguments.First();
 
                     if (propertyType is null)
-                        throw new Exception($"Unable to get {property.Name} property type");
+                        throw new Exception($"Unable to get {((MemberInfo)property).Name} property type");
 
                     propertyValue = Parse(propertyType, propertyValue);
 
                     var getInstanceValue = property.GetValue(instances.Last());
                     // Add value to array Type property
-                    if (IsCollectionType<Array>(property.PropertyType))
+                    if (IsCollectionType<Array>(PropertyType(property)))
                     {
                         var resultList = ((IEnumerable)getInstanceValue).Cast<object>().ToList();
                         resultList.Add(propertyValue);
@@ -72,46 +75,16 @@ namespace SfTableExtension
                         property.SetValue(instances.Last(), getInstanceValue);
                     }
                 }
-
-                foreach (var field in fieldsList)
-                {
-                    if (!row.ContainsKey(field.Name)) continue;
-                    if (!IsCollectionType<IEnumerable>(field.FieldType)) continue;
-                    if (row[field.Name].IsNullOrEmpty()) continue;
-
-                    object fieldValue = row[field.Name];
-
-                    var fieldType = IsCollectionType<Array>(field.FieldType) ?
-                        field.FieldType.GetElementType() :
-                        field.FieldType.GenericTypeArguments.First();
-
-                    if (fieldType is null)
-                        throw new Exception($"Unable to get {field.Name} field type");
-
-                    fieldValue = Parse(fieldType, fieldValue);
-
-                    var getInstanceValue = field.GetValue(instances.Last());
-                    // Add value to array Type filed
-                    if (IsCollectionType<Array>(field.FieldType))
-                    {
-                        var resultList = ((IEnumerable)getInstanceValue).Cast<object>().ToList();
-                        resultList.Add(fieldValue);
-                        var resultArray = Array.CreateInstance(fieldType, resultList.Count);
-                        Array.Copy(resultList.ToArray(), resultArray, resultList.Count);
-                        field.SetValue(instances.Last(), resultArray);
-                    }
-                    // Add value to Collection type filed
-                    else
-                    {
-                        var iCollectionObject = typeof(ICollection<>).MakeGenericType(fieldType);
-                        var addMethod = iCollectionObject.GetMethod("Add");
-                        addMethod.Invoke(getInstanceValue, new object[] { fieldValue });
-                        field.SetValue(instances.Last(), getInstanceValue);
-                    }
-                }
             }
 
             return instances;
+        }
+
+        private static Type PropertyType(MemberInfo memberInfo)
+        {
+            return (Type)memberInfo.GetType().GetProperties(BindingFlags.Public |
+                                                            BindingFlags.Instance |
+                                                            BindingFlags.DeclaredOnly).Last(x => x.PropertyType == typeof(Type)).GetValue(memberInfo, null);
         }
 
         private static bool IsCollectionType<T>(Type propType)

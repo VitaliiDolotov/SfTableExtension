@@ -58,7 +58,7 @@ namespace SfTableExtension
                     propertyValue = Parse(propertyType, propertyValue);
 
                     var getValueMethod = GetMethod(member, ValueMethods.GetValue);
-                    var getInstanceValue = getValueMethod.Invoke(member, new object?[] { instances.Last() });
+                    var getInstanceValue = getValueMethod.Invoke(member, new object[] { instances.Last() });
                     // Add value to array Type property
                     if (IsCollectionType<Array>(GetType(member)))
                     {
@@ -67,7 +67,7 @@ namespace SfTableExtension
                         var resultArray = Array.CreateInstance(propertyType, resultList.Count);
                         Array.Copy(resultList.ToArray(), resultArray, resultList.Count);
                         var setValueMethod = GetMethod(member, ValueMethods.SetValue);
-                        setValueMethod.Invoke(member, new object?[] { instances.Last(), resultArray });
+                        setValueMethod.Invoke(member, new object[] { instances.Last(), resultArray });
                     }
                     // Add value to Collection type property
                     else
@@ -77,7 +77,7 @@ namespace SfTableExtension
                         addMethod.Invoke(getInstanceValue, new object[] { propertyValue });
 
                         var setValueMethod = GetMethod(member, ValueMethods.SetValue);
-                        setValueMethod.Invoke(member, new object?[] { instances.Last(), getInstanceValue });
+                        setValueMethod.Invoke(member, new object[] { instances.Last(), getInstanceValue });
                     }
                 }
             }

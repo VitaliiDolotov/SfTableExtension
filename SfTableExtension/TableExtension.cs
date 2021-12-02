@@ -31,7 +31,6 @@ namespace SfTableExtension
             listMember.AddRange(fieldsList);
             listMember.AddRange(propertiesList);
 
-
             foreach (var row in table.Rows.Skip(1))
             {
                 if (row.Any(cell => allVariablesNames.Contains(cell.Key)

@@ -92,7 +92,7 @@ namespace SfTableExtension
             {
                 MemberTypes.Property => ((PropertyInfo) member).PropertyType,
                 MemberTypes.Field => ((FieldInfo) member).FieldType,
-                _ => throw new Exception($"Incorrect memberInfo type. MemberInfo type: {member.MemberType}")
+                _ => throw new Exception($"Not supported memberInfo type. MemberInfo type: {member.MemberType}")
             };
         }
 
@@ -110,7 +110,7 @@ namespace SfTableExtension
                     .GetType().GetMethods().ToList().FindAll(x => x.Name.Equals(method.ToString())).Last(),
                 MemberTypes.Field => ((FieldInfo) member)
                     .GetType().GetMethods().ToList().FindAll(x => x.Name.Equals(method.ToString())).Last(),
-                _ => throw new Exception($"Incorrect memberInfo type. MemberInfo type: {member.MemberType}")
+                _ => throw new Exception($"Not supported memberInfo type. MemberInfo type: {member.MemberType}")
             };
         }
 

@@ -16,20 +16,20 @@ namespace SfTableExtension
             var instances = new List<T>() { table.Rows.First().CreateInstance<T>() };
 
             var properties = typeof(T).GetProperties().ToList();
-            var propertiesList = properties.FindAll(x => IsCollectionType<IEnumerable>(x.PropertyType));
+            var collectionTypeProperties = properties.FindAll(x => IsCollectionType<IEnumerable>(x.PropertyType));
 
             var fields = typeof(T).GetFields().ToList();
-            var fieldsList = fields.FindAll(x => IsCollectionType<IEnumerable>(x.FieldType));
+            var collectionTypeFields = fields.FindAll(x => IsCollectionType<IEnumerable>(x.FieldType));
 
-            var allCollectionTypeVariablesNames = propertiesList.Select(x => x.Name)
-                .Concat(fieldsList.Select(x => x.Name).ToList());
+            var allCollectionTypeVariablesNames = collectionTypeProperties.Select(x => x.Name)
+                .Concat(collectionTypeFields.Select(x => x.Name).ToList());
 
             var allVariablesNames = properties.Select(x => x.Name)
                 .Concat(fields.Select(x => x.Name).ToList());
 
-            var listMember = new List<MemberInfo>();
-            listMember.AddRange(fieldsList);
-            listMember.AddRange(propertiesList);
+            var collectionTypeMembers = new List<MemberInfo>();
+            collectionTypeMembers.AddRange(collectionTypeFields);
+            collectionTypeMembers.AddRange(collectionTypeProperties);
 
             foreach (var row in table.Rows.Skip(1))
             {
@@ -40,10 +40,9 @@ namespace SfTableExtension
                     continue;
                 }
 
-                foreach (var member in listMember)
+                foreach (var member in collectionTypeMembers)
                 {
                     if (!row.ContainsKey(member.Name)) continue;
-                    if (!IsCollectionType<IEnumerable>(GetType(member))) continue;
                     if (row[member.Name].IsNullOrEmpty()) continue;
 
                     object propertyValue = row[member.Name];
@@ -89,8 +88,8 @@ namespace SfTableExtension
         {
             return member.MemberType switch
             {
-                MemberTypes.Property => ((PropertyInfo) member).PropertyType,
-                MemberTypes.Field => ((FieldInfo) member).FieldType,
+                MemberTypes.Property => ((PropertyInfo)member).PropertyType,
+                MemberTypes.Field => ((FieldInfo)member).FieldType,
                 _ => throw new Exception($"Not supported memberInfo type. MemberInfo type: {member.MemberType}")
             };
         }
@@ -105,9 +104,9 @@ namespace SfTableExtension
         {
             return member.MemberType switch
             {
-                MemberTypes.Property => ((PropertyInfo) member)
+                MemberTypes.Property => ((PropertyInfo)member)
                     .GetType().GetMethods().ToList().FindAll(x => x.Name.Equals(method.ToString())).Last(),
-                MemberTypes.Field => ((FieldInfo) member)
+                MemberTypes.Field => ((FieldInfo)member)
                     .GetType().GetMethods().ToList().FindAll(x => x.Name.Equals(method.ToString())).Last(),
                 _ => throw new Exception($"Not supported memberInfo type. MemberInfo type: {member.MemberType}")
             };

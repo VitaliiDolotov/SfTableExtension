@@ -58,8 +58,8 @@ namespace SfTableExtension
 
                     propertyValue = Parse(propertyType, propertyValue);
 
-                    var GetValueMethod = GetMethod(member, ValueMethods.GetValue);
-                    var getInstanceValue = GetValueMethod.Invoke(member, new object?[] { instances.Last() });
+                    var getValueMethod = GetMethod(member, ValueMethods.GetValue);
+                    var getInstanceValue = getValueMethod.Invoke(member, new object?[] { instances.Last() });
                     // Add value to array Type property
                     if (IsCollectionType<Array>(GetType(member)))
                     {
@@ -67,8 +67,8 @@ namespace SfTableExtension
                         resultList.Add(propertyValue);
                         var resultArray = Array.CreateInstance(propertyType, resultList.Count);
                         Array.Copy(resultList.ToArray(), resultArray, resultList.Count);
-                        var SetValueMethod = GetMethod(member, ValueMethods.SetValue);
-                        SetValueMethod.Invoke(member, new object?[] { instances.Last(), resultArray });
+                        var setValueMethod = GetMethod(member, ValueMethods.SetValue);
+                        setValueMethod.Invoke(member, new object?[] { instances.Last(), resultArray });
                     }
                     // Add value to Collection type property
                     else
@@ -77,8 +77,8 @@ namespace SfTableExtension
                         var addMethod = iCollectionObject.GetMethod("Add");
                         addMethod.Invoke(getInstanceValue, new object[] { propertyValue });
 
-                        var SetValueMethod = GetMethod(member, ValueMethods.SetValue);
-                        SetValueMethod.Invoke(member, new object?[] { instances.Last(), getInstanceValue });
+                        var setValueMethod = GetMethod(member, ValueMethods.SetValue);
+                        setValueMethod.Invoke(member, new object?[] { instances.Last(), getInstanceValue });
                     }
                 }
             }
@@ -90,8 +90,8 @@ namespace SfTableExtension
         {
             return member.MemberType switch
             {
-                MemberTypes.Property => (member as PropertyInfo).PropertyType,
-                MemberTypes.Field => (member as FieldInfo).FieldType,
+                MemberTypes.Property => ((PropertyInfo) member).PropertyType,
+                MemberTypes.Field => ((FieldInfo) member).FieldType,
                 _ => throw new Exception($"Incorrect memberInfo type. MemberInfo type: {member.MemberType}")
             };
         }
@@ -106,9 +106,9 @@ namespace SfTableExtension
         {
             return member.MemberType switch
             {
-                MemberTypes.Property => (member as PropertyInfo)
+                MemberTypes.Property => ((PropertyInfo) member)
                     .GetType().GetMethods().ToList().FindAll(x => x.Name.Equals(method.ToString())).Last(),
-                MemberTypes.Field => (member as FieldInfo)
+                MemberTypes.Field => ((FieldInfo) member)
                     .GetType().GetMethods().ToList().FindAll(x => x.Name.Equals(method.ToString())).Last(),
                 _ => throw new Exception($"Incorrect memberInfo type. MemberInfo type: {member.MemberType}")
             };
@@ -124,7 +124,7 @@ namespace SfTableExtension
         {
             if (propertyType == typeof(string)) return propertyValue;
 
-            if (propertyType.BaseType.Equals((typeof(Enum))))
+            if (propertyType.BaseType == (typeof(Enum)))
                 return Enum.Parse(propertyType, propertyValue.ToString());
 
             try

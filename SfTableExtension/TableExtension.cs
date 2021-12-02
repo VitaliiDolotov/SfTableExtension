@@ -86,7 +86,7 @@ namespace SfTableExtension
             return instances;
         }
 
-        public static Type GetType(MemberInfo member)
+        private static Type GetType(MemberInfo member)
         {
             return member.MemberType switch
             {
@@ -96,13 +96,13 @@ namespace SfTableExtension
             };
         }
 
-        public enum ValueMethods
+        private enum ValueMethods
         {
             GetValue,
             SetValue
         }
 
-        public static MethodInfo GetMethod(MemberInfo member, ValueMethods method)
+        private static MethodInfo GetMethod(MemberInfo member, ValueMethods method)
         {
             return member.MemberType switch
             {

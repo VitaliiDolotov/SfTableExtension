@@ -21,35 +21,35 @@ namespace SfTableExtension
             var @class = table.Create<UserAccount>();
 
             // First object
-            //@class.First().Roles[0].Should().Be("Portal Admin");
-            //@class.First().Roles[1].Should().Be("Sales person");
-            //@class.First().Roles[2].Should().Be("Content moderator");
+            @class.First().Roles[0].Should().Be("Portal Admin");
+            @class.First().Roles[1].Should().Be("Sales person");
+            @class.First().Roles[2].Should().Be("Content moderator");
 
-            //@class.First().RoleActivationStatus[0].Should().Be(true);
-            //@class.First().RoleActivationStatus[1].Should().Be(false);
-            //@class.First().RoleActivationStatus[2].Should().Be(false);
+            @class.First().RoleActivationStatus[0].Should().Be(true);
+            @class.First().RoleActivationStatus[1].Should().Be(false);
+            @class.First().RoleActivationStatus[2].Should().Be(false);
 
-            //@class.First().AccountScore[0].Should().Be(5);
-            //@class.First().AccountScore[1].Should().Be(2);
-            //@class.First().AccountScore[2].Should().Be(8);
+            @class.First().AccountScore.ToList()[0].Should().Be(5);
+            @class.First().AccountScore.ToList()[1].Should().Be(2);
+            @class.First().AccountScore.ToList()[2].Should().Be(8);
 
-            //@class.First().Languages[0].Should().Be(Language.English);
-            //@class.First().Languages[1].Should().Be(Language.Swedish);
-            //@class.First().Languages[2].Should().Be(Language.Finnish);
+            @class.First().Languages[0].Should().Be(Language.English);
+            @class.First().Languages[1].Should().Be(Language.Swedish);
+            @class.First().Languages[2].Should().Be(Language.Finnish);
 
             // Second object
-            //@class.Last().Roles[0].Should().Be("Portal Admin");
-            //@class.Last().Roles[1].Should().Be("Content moderator");
+            @class.Last().Roles[0].Should().Be("Portal Admin");
+            @class.Last().Roles[1].Should().Be("Content moderator");
 
-            //@class.Last().RoleActivationStatus[0].Should().Be(true);
-            //@class.Last().RoleActivationStatus[1].Should().Be(false);
-            //@class.Last().RoleActivationStatus[2].Should().Be(true);
+            @class.Last().RoleActivationStatus[0].Should().Be(true);
+            @class.Last().RoleActivationStatus[1].Should().Be(false);
+            @class.Last().RoleActivationStatus[2].Should().Be(true);
 
-            //@class.Last().AccountScore[0].Should().Be(7);
-            //@class.Last().AccountScore[1].Should().Be(1);
+            @class.Last().AccountScore.ToList()[0].Should().Be(7);
+            @class.Last().AccountScore.ToList()[1].Should().Be(1);
 
-            //@class.Last().Languages[0].Should().Be(Language.Finnish);
-            //@class.Last().Languages[1].Should().Be(Language.Swedish);
+            @class.Last().Languages[0].Should().Be(Language.Finnish);
+            @class.Last().Languages[1].Should().Be(Language.Swedish);
         }
     }
 }

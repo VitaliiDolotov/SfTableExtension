@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel.Utilities;
 using TechTalk.SpecFlow;
 using TechTalk.SpecFlow.Assist;
 using TechTalk.SpecRun.Common.Helper;
@@ -13,34 +14,38 @@ namespace SfTableExtension
     {
         public static List<T> Create<T>(this Table table)
         {
-            var instances = new List<T>() { table.Rows.First().CreateInstance<T>() };
+            var instances = new List<T> { table.Rows.First().CreateInstance<T>() };
 
             var properties = typeof(T).GetProperties().ToList();
-            var collectionTypeProperties = properties.FindAll(x => IsCollectionType<IEnumerable>(x.PropertyType));
+            var collectionTypeProperties = properties
+                .FindAll(x => IsCollectionType<IEnumerable>(x.PropertyType));
 
             var fields = typeof(T).GetFields().ToList();
-            var collectionTypeFields = fields.FindAll(x => IsCollectionType<IEnumerable>(x.FieldType));
+            var collectionTypeFields = fields
+                .FindAll(x => IsCollectionType<IEnumerable>(x.FieldType));
 
-            var allCollectionTypeVariablesNames = collectionTypeProperties.Select(x => x.Name)
+            var allCollectionTypeVariablesNames = collectionTypeProperties
+                .Select(x => x.Name)
                 .Concat(collectionTypeFields.Select(x => x.Name).ToList());
 
             var allVariablesNames = properties.Select(x => x.Name)
                 .Concat(fields.Select(x => x.Name).ToList());
 
-            var collectionTypeMembers = new List<MemberInfo>();
-            collectionTypeMembers.AddRange(collectionTypeFields);
-            collectionTypeMembers.AddRange(collectionTypeProperties);
+            var collectionFieldsAndProperties = new List<MemberInfo>();
+            collectionFieldsAndProperties.AddRange(collectionTypeFields);
+            collectionFieldsAndProperties.AddRange(collectionTypeProperties);
 
             foreach (var row in table.Rows.Skip(1))
             {
-                if (row.Any(cell => allVariablesNames.Contains(cell.Key)
-                                    && !allCollectionTypeVariablesNames.Contains(cell.Key) && cell.Value.IsNotNullOrEmpty()))
+                if (row.Any(cell => allVariablesNames.Contains(cell.Key) &&
+                                    !allCollectionTypeVariablesNames.Contains(cell.Key) &&
+                                    cell.Value.IsNotNullOrEmpty()))
                 {
                     instances.Add(row.CreateInstance<T>());
                     continue;
                 }
 
-                foreach (var member in collectionTypeMembers)
+                foreach (var member in collectionFieldsAndProperties)
                 {
                     if (!row.ContainsKey(member.Name)) continue;
                     if (row[member.Name].IsNullOrEmpty()) continue;
@@ -65,6 +70,7 @@ namespace SfTableExtension
                         resultList.Add(propertyValue);
                         var resultArray = Array.CreateInstance(propertyType, resultList.Count);
                         Array.Copy(resultList.ToArray(), resultArray, resultList.Count);
+
                         var setValueMethod = GetMethod(member, ValueMethods.SetValue);
                         setValueMethod.Invoke(member, new object[] { instances.Last(), resultArray });
                     }
@@ -105,9 +111,17 @@ namespace SfTableExtension
             return member.MemberType switch
             {
                 MemberTypes.Property => ((PropertyInfo)member)
-                    .GetType().GetMethods().ToList().FindAll(x => x.Name.Equals(method.ToString())).Last(),
+                    .GetType()
+                    .GetMethods()
+                    .ToList()
+                    .FindAll(x => x.Name.Equals(method.ToString()))
+                    .Last(),
                 MemberTypes.Field => ((FieldInfo)member)
-                    .GetType().GetMethods().ToList().FindAll(x => x.Name.Equals(method.ToString())).Last(),
+                    .GetType()
+                    .GetMethods()
+                    .ToList()
+                    .FindAll(x => x.Name.Equals(method.ToString()))
+                    .Last(),
                 _ => throw new Exception($"Not supported memberInfo type. MemberInfo type: {member.MemberType}")
             };
         }
@@ -120,10 +134,14 @@ namespace SfTableExtension
 
         private static object Parse(Type propertyType, object propertyValue)
         {
-            if (propertyType == typeof(string)) return propertyValue;
+            if (propertyType == typeof(string))
+                return propertyValue;
 
             if (propertyType.BaseType == (typeof(Enum)))
-                return Enum.Parse(propertyType, propertyValue.ToString());
+            {
+                var parsedValue = Enum.Parse(propertyType, propertyValue.ToString());
+                return parsedValue;
+            }
 
             try
             {

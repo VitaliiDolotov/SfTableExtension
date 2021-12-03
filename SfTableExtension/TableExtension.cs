@@ -55,18 +55,6 @@ namespace SfTableExtension
                         var collectionFirstSuitableField = collectionLastElementData.First(x => x.Name.Equals(memberInfo.Name));
                         var collectionFirstFieldValue = collectionFirstSuitableField.GetMemberValue(collection.Last());
 
-                        if (value != null && (!collectionFirstSuitableField.GetMemberType().IsPrimitive || collectionFirstSuitableField.GetMemberType() != typeof(decimal) || collectionFirstSuitableField.GetMemberType() != typeof(string)))
-                        {
-                            if (value.GetType().GetMethod("get_Count") != null && Convert.ToInt32(value.GetType().GetMethod("get_Count")?.Invoke(value, Array.Empty<object>())) == 0)
-                            {
-                                break;
-                            }
-
-                            var methodInfo = collectionFirstFieldValue.GetType().GetMethod("Add");
-                            var elementAt = value.GetType().GetMethod("get_Item")?.Invoke(value, new object[] { 0 });
-                            methodInfo?.Invoke(collectionFirstFieldValue, new[] { elementAt });
-                        }
-
                         if (collectionFirstSuitableField.GetMemberType().IsArray)
                         {
                             var objectArray = ((IEnumerable)collectionFirstFieldValue).Cast<object>().ToArray();
@@ -83,6 +71,17 @@ namespace SfTableExtension
                                 copyArray.SetValue(value?.GetType().GetMethod("GetValue", new[] { typeof(int) })?.Invoke(value, new object[] { 0 }), arrayLength);
                                 SetMemberValue(collectionFirstSuitableField, collection.Last(), copyArray);
                             }
+                        }
+                        else if (value != null && (!collectionFirstSuitableField.GetMemberType().IsPrimitive || collectionFirstSuitableField.GetMemberType() != typeof(decimal) || collectionFirstSuitableField.GetMemberType() != typeof(string)))
+                        {
+                            if (value.GetType().GetMethod("get_Count") != null && Convert.ToInt32(value.GetType().GetMethod("get_Count")?.Invoke(value, Array.Empty<object>())) == 0)
+                            {
+                                break;
+                            }
+
+                            var methodInfo = collectionFirstFieldValue.GetType().GetMethod("Add");
+                            var elementAt = value.GetType().GetMethod("get_Item")?.Invoke(value, new object[] { 0 });
+                            methodInfo?.Invoke(collectionFirstFieldValue, new[] { elementAt });
                         }
                     }
                 }

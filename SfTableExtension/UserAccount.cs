@@ -4,7 +4,18 @@ namespace SfTableExtension
 {
     class UserAccount
     {
-        public string Name { get; set; }
+        private string _name;
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                _name = value;
+                TruncatedName = value[..3];
+            }
+        }
+
+        public string TruncatedName { get; set; }
         public string Phone { get; set; }
 
         //public List<string> Roles { get; set; }

@@ -33,9 +33,9 @@ namespace SfTableExtension
             @class.First().AccountScore[1].Should().Be(2);
             @class.First().AccountScore[2].Should().Be(8);
 
-            //@class.First().Languages[0].Should().Be(Language.English);
-            //@class.First().Languages[1].Should().Be(Language.Swedish);
-            //@class.First().Languages[2].Should().Be(Language.Finnish);
+            @class.First().Languages[0].Should().Be(Language.English);
+            @class.First().Languages[1].Should().Be(Language.Swedish);
+            @class.First().Languages[2].Should().Be(Language.Finnish);
 
             // Second object
             @class.Last().Roles[0].Should().Be("Portal Admin");
@@ -48,8 +48,8 @@ namespace SfTableExtension
             @class.Last().AccountScore[0].Should().Be(7);
             @class.Last().AccountScore[1].Should().Be(1);
 
-            //@class.Last().Languages[0].Should().Be(Language.Finnish);
-            //@class.Last().Languages[1].Should().Be(Language.Swedish);
+            @class.Last().Languages[0].Should().Be(Language.Finnish);
+            @class.Last().Languages[1].Should().Be(Language.Swedish);
         }
     }
 }

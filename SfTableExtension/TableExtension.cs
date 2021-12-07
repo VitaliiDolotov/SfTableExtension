@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel.Utilities;
 using TechTalk.SpecFlow;
 using TechTalk.SpecFlow.Assist;
 using TechTalk.SpecRun.Common.Helper;
@@ -37,6 +36,7 @@ namespace SfTableExtension
 
             foreach (var row in table.Rows.Skip(1))
             {
+
                 if (row.Any(cell => allVariablesNames.Contains(cell.Key) &&
                                     !allCollectionTypeVariablesNames.Contains(cell.Key) &&
                                     cell.Value.IsNotNullOrEmpty()))

@@ -37,6 +37,8 @@ namespace SfTableExtension
             @class.First().Languages[1].Should().Be(Language.Swedish);
             @class.First().Languages[2].Should().Be(Language.Finnish);
 
+            @class.First().TruncatedName.Should().Be("Mar");
+
             // Second object
             @class.Last().Roles[0].Should().Be("Portal Admin");
             @class.Last().Roles[1].Should().Be("Content moderator");
@@ -50,6 +52,8 @@ namespace SfTableExtension
 
             @class.Last().Languages[0].Should().Be(Language.Finnish);
             @class.Last().Languages[1].Should().Be(Language.Swedish);
+
+            @class.Last().TruncatedName.Should().Be("Tom");
         }
     }
 }

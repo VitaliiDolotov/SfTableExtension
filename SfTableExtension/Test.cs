@@ -10,7 +10,7 @@ namespace SfTableExtension
         [Fact]
         public void Check_Table_Creation()
         {
-            var table = new Table("AccountScore", "Name", "Phone", "Roles", "RoleActivationStatus", "Languages");
+            var table = new Table("Account Score", "Name", "Phone", "Roles", "Role_Activation.Status", "Languages");
             table.AddRow("5", "Marian", "08477542984", "Portal Admin", "true", "English");
             table.AddRow("2", string.Empty, string.Empty, "Sales person", "false", "Swedish");
             table.AddRow("8", string.Empty, string.Empty, "Content moderator", "false", "Finnish");

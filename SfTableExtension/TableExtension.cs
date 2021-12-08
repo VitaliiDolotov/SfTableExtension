@@ -13,7 +13,7 @@ namespace SfTableExtension
     {
         public static List<T> Create<T>(this Table table)
         {
-            var instances = new List<T> { table.Rows.First().CreateInstance<T>() };
+            var instances = new List<T>();
 
             var properties = typeof(T).GetProperties().ToList();
             var collectionTypeProperties = properties
@@ -34,7 +34,7 @@ namespace SfTableExtension
             collectionFieldsAndProperties.AddRange(collectionTypeFields);
             collectionFieldsAndProperties.AddRange(collectionTypeProperties);
 
-            foreach (var row in table.Rows.Skip(1))
+            foreach (var row in table.Rows)
             {
                 var normalizeRow = row.NormalizeTableRow();
 
@@ -42,7 +42,9 @@ namespace SfTableExtension
                                              !allCollectionTypeVariablesNames.Contains(cell.Key) &&
                                              cell.Value.IsNotNullOrEmpty()))
                 {
-                    instances.Add(normalizeRow.CreateInstance<T>());
+                    var newInstance = normalizeRow.CreateInstance<T>();
+                    newInstance = VerifyCollectionElements(newInstance, collectionFieldsAndProperties, normalizeRow);
+                    instances.Add(newInstance);
                     continue;
                 }
 
@@ -64,6 +66,7 @@ namespace SfTableExtension
 
                     var getValueMethod = GetMethod(member, ValueMethods.GetValue);
                     var getInstanceValue = getValueMethod.Invoke(member, new object[] { instances.Last() });
+                    var setValueMethod = GetMethod(member, ValueMethods.SetValue);
                     // Add value to array Type property
                     if (IsCollectionType<Array>(GetType(member)))
                     {
@@ -72,7 +75,6 @@ namespace SfTableExtension
                         var resultArray = Array.CreateInstance(propertyType, resultList.Count);
                         Array.Copy(resultList.ToArray(), resultArray, resultList.Count);
 
-                        var setValueMethod = GetMethod(member, ValueMethods.SetValue);
                         setValueMethod.Invoke(member, new object[] { instances.Last(), resultArray });
                     }
                     // Add value to Collection type property
@@ -82,13 +84,45 @@ namespace SfTableExtension
                         var addMethod = iCollectionObject.GetMethod("Add");
                         addMethod.Invoke(getInstanceValue, new object[] { propertyValue });
 
-                        var setValueMethod = GetMethod(member, ValueMethods.SetValue);
                         setValueMethod.Invoke(member, new object[] { instances.Last(), getInstanceValue });
                     }
                 }
             }
 
             return instances;
+        }
+
+        public static T VerifyCollectionElements<T>(T instance, List<MemberInfo> collection, TableRow row)
+        {
+            foreach (var member in collection)
+            {
+                var getValueMethod = GetMethod(member, ValueMethods.GetValue);
+                var instanceValue = getValueMethod.Invoke(member, new object[] { instance });
+                var valueCount = ((IEnumerable)instanceValue)?.Cast<object>().ToList();
+
+                if (!(valueCount?.Count > 1)) continue;
+
+                var value = row[member.Name];
+                var setValueMethod = GetMethod(member, ValueMethods.SetValue);
+                var addMethod = instanceValue.GetType().GetMethod("Add");
+
+                if (IsCollectionType<Array>(GetType(member)))
+                {
+                    var resultList = new List<object> { value };
+                    var resultArray = new string[resultList.Count];
+                    Array.Copy(resultList.ToArray(), resultArray, resultList.Count);
+                    setValueMethod.Invoke(member, new object[] { instance, resultArray });
+                }
+                else
+                {
+                    var clearMethod = instanceValue.GetType().GetMethod("Clear");
+                    clearMethod?.Invoke(instanceValue, Array.Empty<object>());
+                    addMethod?.Invoke(instanceValue, new object[] { value });
+                    setValueMethod.Invoke(member, new object[] { instance, instanceValue });
+                }
+            }
+
+            return instance;
         }
 
         private static Type GetType(MemberInfo member)
@@ -121,7 +155,7 @@ namespace SfTableExtension
                     .GetType()
                     .GetMethods()
                     .ToList()
-                    .FindAll(x => x.Name.Equals(method.ToString()))
+                    .FindAll(x => x.Name.Equals(method.ToString()))?
                     .Last(),
                 _ => throw new Exception($"Not supported memberInfo type. MemberInfo type: {member.MemberType}")
             };

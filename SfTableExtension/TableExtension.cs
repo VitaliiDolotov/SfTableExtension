@@ -36,21 +36,22 @@ namespace SfTableExtension
 
             foreach (var row in table.Rows.Skip(1))
             {
+                var normalizeRow = row.NormalizeTableRow();
 
-                if (row.Any(cell => allVariablesNames.Contains(cell.Key) &&
-                                    !allCollectionTypeVariablesNames.Contains(cell.Key) &&
-                                    cell.Value.IsNotNullOrEmpty()))
+                if (normalizeRow.Any(cell => allVariablesNames.Contains(cell.Key) &&
+                                             !allCollectionTypeVariablesNames.Contains(cell.Key) &&
+                                             cell.Value.IsNotNullOrEmpty()))
                 {
-                    instances.Add(row.CreateInstance<T>());
+                    instances.Add(normalizeRow.CreateInstance<T>());
                     continue;
                 }
 
                 foreach (var member in collectionFieldsAndProperties)
                 {
-                    if (!row.ContainsKey(member.Name)) continue;
-                    if (row[member.Name].IsNullOrEmpty()) continue;
+                    if (!normalizeRow.ContainsKey(member.Name)) continue;
+                    if (normalizeRow[member.Name].IsNullOrEmpty()) continue;
 
-                    object propertyValue = row[member.Name];
+                    object propertyValue = normalizeRow[member.Name];
 
                     var propertyType = IsCollectionType<Array>(GetType(member)) ?
                         GetType(member).GetElementType() :

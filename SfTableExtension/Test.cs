@@ -11,8 +11,8 @@ namespace SfTableExtension
         public void Check_Table_Creation()
         {
             var table = new Table("Account Score", "Name", "Phone", "Roles", "Role_Activation.Status", "Languages");
-            table.AddRow("5.6", "Marian", "08477542984", "Portal, Admin", "true", "English");
-            table.AddRow("2", string.Empty, string.Empty, "Sales person", "false", "Swedish");
+            table.AddRow("5.6", "Marian", "08477542984", "Portal, Admin", "true, false", "English");
+            table.AddRow("2", string.Empty, string.Empty, "Sales person", "true", "Swedish");
             table.AddRow("8", string.Empty, string.Empty, "Content moderator", "false", "Finnish");
             table.AddRow(string.Empty, "Tom", "08473322911", string.Empty, "true", "Finnish");
             table.AddRow("7", string.Empty, string.Empty, "Portal Admin", "false", "Swedish");
@@ -27,7 +27,8 @@ namespace SfTableExtension
 
             userAccounts.First().RoleActivationStatus[0].Should().Be(true);
             userAccounts.First().RoleActivationStatus[1].Should().Be(false);
-            userAccounts.First().RoleActivationStatus[2].Should().Be(false);
+            userAccounts.First().RoleActivationStatus[2].Should().Be(true);
+            userAccounts.First().RoleActivationStatus[3].Should().Be(false);
 
             userAccounts.First().AccountScore.ToList()[0].Should().Be(5.6);
             userAccounts.First().AccountScore.ToList()[1].Should().Be(2);

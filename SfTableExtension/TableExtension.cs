@@ -53,38 +53,39 @@ namespace SfTableExtension
                     if (!normalizeRow.ContainsKey(member.Name)) continue;
                     if (normalizeRow[member.Name].IsNullOrEmpty()) continue;
 
-                    object propertyValue = normalizeRow[member.Name];
+                    object memberValue = normalizeRow[member.Name];
 
-                    var propertyType = IsCollectionType<Array>(GetType(member)) ?
+                    var memberType = IsCollectionType<Array>(GetType(member)) ?
                         GetType(member).GetElementType() :
                         GetType(member).GenericTypeArguments.First();
 
-                    if (propertyType is null)
-                        throw new Exception($"Unable to get {member.Name} property type");
+                    if (memberType is null)
+                        throw new Exception($"Unable to get {member.Name} member type");
 
-                    propertyValue = Parse(propertyType, propertyValue);
+                    memberValue = Parse(memberType, memberValue);
 
                     var getValueMethod = GetMethod(member, ValueMethods.GetValue);
                     var getInstanceValue = getValueMethod.Invoke(member, new object[] { instances.Last() });
                     var setValueMethod = GetMethod(member, ValueMethods.SetValue);
-                    // Add value to array Type property
+
+                    // Add value to array Type member
                     if (IsCollectionType<Array>(GetType(member)))
                     {
                         var resultList = ((IEnumerable)getInstanceValue).Cast<object>().ToList();
-                        resultList.Add(propertyValue);
-                        var resultArray = Array.CreateInstance(propertyType, resultList.Count);
+                        resultList.Add(memberValue);
+                        var resultArray = Array.CreateInstance(memberType, resultList.Count);
                         Array.Copy(resultList.ToArray(), resultArray, resultList.Count);
 
                         setValueMethod.Invoke(member, new object[] { instances.Last(), resultArray });
                     }
-                    // Add value to Collection type property
+                    // Add value to Collection type member
                     else
                     {
-                        var iCollectionObject = typeof(ICollection<>).MakeGenericType(propertyType);
+                        var iCollectionObject = typeof(ICollection<>).MakeGenericType(memberType);
                         var addMethod = iCollectionObject.GetMethod("Add");
-                        addMethod.Invoke(getInstanceValue, new object[] { propertyValue });
+                        addMethod.Invoke(getInstanceValue, new[] { memberValue });
 
-                        setValueMethod.Invoke(member, new object[] { instances.Last(), getInstanceValue });
+                        setValueMethod.Invoke(member, new[] { instances.Last(), getInstanceValue });
                     }
                 }
             }
@@ -102,6 +103,12 @@ namespace SfTableExtension
 
                 if (!(valueCount?.Count > 1)) continue;
 
+                var memberSubType = IsCollectionType<Array>(GetType(member)) ?
+                    GetType(member).GetElementType() :
+                    GetType(member).GenericTypeArguments.First();
+
+                if (memberSubType != typeof(string)) continue;
+
                 var value = row[member.Name];
                 var setValueMethod = GetMethod(member, ValueMethods.SetValue);
                 var addMethod = instanceValue.GetType().GetMethod("Add");
@@ -118,7 +125,7 @@ namespace SfTableExtension
                     var clearMethod = instanceValue.GetType().GetMethod("Clear");
                     clearMethod?.Invoke(instanceValue, Array.Empty<object>());
                     addMethod?.Invoke(instanceValue, new object[] { value });
-                    setValueMethod.Invoke(member, new object[] { instance, instanceValue });
+                    setValueMethod.Invoke(member, new[] { instance, instanceValue });
                 }
             }
 
@@ -181,7 +188,7 @@ namespace SfTableExtension
             try
             {
                 var parse = propertyType.GetMethods().First(x => x.Name.Equals("Parse"));
-                return parse.Invoke(propertyType, new object[] { propertyValue });
+                return parse.Invoke(propertyType, new[] { propertyValue });
             }
             catch
             {
